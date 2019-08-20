@@ -28,6 +28,9 @@ ll /root/rpmbuild/RPMS/x86_64
 mkdir -p /root/yum
 repotrack openssl openssh openssh-server openssh-clients -p /root/yum
 
+rm -f /root/yum/openssh-*
+cp -r /root/rpmbuild/RPMS/x86_64/*.rpm  /root/yum
+
 createrepo -v /root/yum
 tar -zcf yum.tar.gz  /root/yum
 mv yum.tar.gz  opensshUpgradeAnsiblePlaybook/roles/yum/files/
