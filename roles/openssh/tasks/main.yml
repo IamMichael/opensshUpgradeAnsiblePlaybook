@@ -1,0 +1,72 @@
+---
+
+- name: "Install OpenSSH"
+  yum:
+    name:
+      - openssl
+      - openssh
+      - openssh-server
+      - openssh-clients
+    state: latest
+    enablerepo: "YUM"
+    disablerepo: "*"
+
+
+- name: "Make Backup and Set Permission "
+  shell: >
+    cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak ; \
+    cp /etc/pam.d/sshd /etc/pam.d/sshd.bak ; \
+    chmod 600 /etc/ssh/ssh_host_*_key 
+
+
+#    sed -i -e "s/#UsePAM no/UsePAM yes/g"                                  /etc/ssh/sshd_config
+#    sed -i -e "s/#PermitEmptyPasswords no/PermitEmptyPasswords no/g"       /etc/ssh/sshd_config
+#    sed -i -e "s/#PasswordAuthentication yes/PasswordAuthentication yes/g" /etc/ssh/sshd_config 
+#    sed -i -e "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config 
+
+
+- name: "Modify OpenSSh Config File"
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '^#UsePAM no', line: 'UsePAM yes' }
+    - { regexp: '^#PermitEmptyPasswords no', line: 'PermitEmptyPasswords no' }
+    - { regexp: '^#PasswordAuthentication yes', line: 'PasswordAuthentication yes' }
+    - { regexp: '^#PermitRootLogin prohibit-password', line: 'PermitRootLogin yes' }
+
+
+- name: "Copy OpenSSH File"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '{{ item.mode }}'
+  with_items:
+    - { src: 'sshd', dest: '/etc/pam.d/', mode: '644' }
+    - { src: 'ssh-copy-id', dest: '/usr/bin/', mode: '755' }
+
+
+- name: "Restart OpenSSH Server"
+  systemd:
+    name: "sshd"
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
+
+- name: "Register Shell Result"
+  shell: ssh -V && systemctl status sshd.service 
+  register: result
+
+
+- name: "Show OpenSSH Server Status and Print Version"
+  debug:
+    msg: "{{ result.stdout_lines }}"
+ 
+
+
+
