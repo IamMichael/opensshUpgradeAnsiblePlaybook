@@ -58,14 +58,24 @@
     enabled: yes
 
 
-- name: "Register Shell Result"
-  shell: ssh -V && systemctl status sshd.service 
-  register: result
+- name: "Register Version Result"
+  shell: ssh -V
+  register: version
 
 
-- name: "Show OpenSSH Server Status and Print Version"
+- name: "Register Status Result"
+  shell: systemctl status sshd.service
+  register: status
+
+
+- name: "Print Version"
   debug:
-    msg: "{{ result.stdout_lines }}"
+    msg: "{{ version.stderr }}"
+
+
+- name: "Show OpenSSH Server Status"
+  debug:
+    msg: "{{ status.stdout_lines }}"
  
 
 
